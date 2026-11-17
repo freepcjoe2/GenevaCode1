@@ -75,7 +75,7 @@ Yaw reference:
 Example:
 
 ```cpp
-inline DistSensorMount mounts[] = {
+inline DistSensorMount mounts[] = { 
     { &distFront,  0.0,  0.0,  0.0 },
     { &distLeft,   0.0,  0.0,  M_PI / 2.0 },
     { &distRight,  0.0,  0.0, -M_PI / 2.0 }

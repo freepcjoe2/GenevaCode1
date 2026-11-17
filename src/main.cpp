@@ -2,8 +2,13 @@
 //#include "hivelib/api.hpp"
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup Left_DriveTrain = {-1,-2};
-pros::MotorGroup Right_DriveTrain = {3,4}; 
+pros::MotorGroup Left_DriveTrain = {-11,-12,-13};
+pros::MotorGroup Right_DriveTrain = {1,2,3}; 
+pros::MotorGroup Lift = {4,5};
+
+pros::adi::Pneumatics ClawFlipper('a', false, true);
+pros::adi::Pneumatics ClawOpener('b', false, true);
+
 
 
 
@@ -64,5 +69,12 @@ void opcontrol() {
     while (true) {
         Left_DriveTrain.move(master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y));
         Right_DriveTrain.move(master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y));
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            Lift.move(127);
+        } else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            Lift.move(-127);
+        } else {
+            Lift.move(0);
+        }
         pros::delay(20);
     }}
