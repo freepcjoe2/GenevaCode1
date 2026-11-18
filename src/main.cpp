@@ -1,13 +1,41 @@
 #include "main.h"
-//#include "hivelib/api.hpp"
+
+#include <cstdint>
+#include <vector>
+
+namespace {
+
+/**
+ * Update these lists after motor-port testing. A negative port reverses that
+ * motor so every motor in a group follows the same controller direction.
+ */
+const std::vector<std::int8_t> kLeftDrivePorts = {-11, -12, -13};
+const std::vector<std::int8_t> kRightDrivePorts = {1, 2, 3};
+const std::vector<std::int8_t> kLiftPorts = {4, 5};
+
+/**
+ * Update these ADI ports after pneumatic-port testing.
+ */
+constexpr std::uint8_t kClawFlipperPort = 'a';
+constexpr std::uint8_t kClawClipperPort = 'b';
+
+constexpr double kMinimalModeScale = 0.5;
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup Left_DriveTrain = {-11,-12,-13};
-pros::MotorGroup Right_DriveTrain = {1,2,3}; 
-pros::MotorGroup Lift = {4,5};
+pros::MotorGroup leftDriveTrain(kLeftDrivePorts);
+pros::MotorGroup rightDriveTrain(kRightDrivePorts);
+pros::MotorGroup lift(kLiftPorts);
 
-pros::adi::Pneumatics ClawFlipper('a', false, true);
-pros::adi::Pneumatics ClawOpener('b', false, true);
+pros::adi::Pneumatics clawFlipper(kClawFlipperPort, false, true);
+pros::adi::Pneumatics clawClipper(kClawClipperPort, false, true);
+
+std::int32_t applyModeScale(const std::int32_t input, const bool minimalMode) {
+	return minimalMode
+		? static_cast<std::int32_t>(input * kMinimalModeScale)
+		: input;
+}
+
+}
 
 
 /**
@@ -63,15 +91,38 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+    bool minimalMode = false;
+
     while (true) {
-        Left_DriveTrain.move(master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y));
-        Right_DriveTrain.move(master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y));
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-            Lift.move(127);
-        } else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-            Lift.move(-127);
-        } else {
-            Lift.move(0);
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP)) {
+            minimalMode = false;
         }
+
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+            minimalMode = true;
+        }
+
+        leftDriveTrain.move(applyModeScale(
+            master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), minimalMode));
+        rightDriveTrain.move(applyModeScale(
+            master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y), minimalMode));
+
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
+            lift.move(applyModeScale(127, minimalMode));
+        } else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
+            lift.move(applyModeScale(-127, minimalMode));
+        } else {
+            lift.move(0);
+        }
+
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+            clawFlipper.toggle();
+        }
+
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+            clawClipper.toggle();
+        }
+
         pros::delay(20);
-    }}
+    }
+}
