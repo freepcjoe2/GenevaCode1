@@ -12,7 +12,7 @@ namespace {
  */
 const std::vector<std::int8_t> kLeftDrivePorts = {-11, -12, -13};
 const std::vector<std::int8_t> kRightDrivePorts = {1, 2, 3};
-const std::vector<std::int8_t> kLiftPorts = {4, 5};
+const std::vector<std::int8_t> kLiftPorts = {1, 5, -6, -10};
 
 /**
  * Update these ADI ports after pneumatic-port testing.
@@ -111,9 +111,9 @@ void opcontrol() {
             master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y), minimalMode));
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-            lift.move(applyModeScale(127, minimalMode));
+            lift.move(applyModeScale(110, minimalMode));
         } else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-            lift.move(applyModeScale(-127, minimalMode));
+            lift.move(applyModeScale(-110, minimalMode));
         } else {
             lift.move(0);
         }
