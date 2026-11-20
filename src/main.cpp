@@ -1,13 +1,14 @@
 #include "main.h"
 #include "autonomous.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <vector>
 
 namespace {
 
 /**
- * Update these lists after motor-port testing. A negative port reverses that
+ * Validated motor-port map. A negative port reverses that
  * motor so every motor in a group follows the same controller direction.
  */
 const std::vector<std::int8_t> kLeftDrivePorts = {-2, -11, -12};
@@ -15,12 +16,30 @@ const std::vector<std::int8_t> kRightDrivePorts = {9, 20, 19};
 const std::vector<std::int8_t> kLiftPorts = {1, 5, -6, -10};
 
 /**
- * Update these ADI ports after pneumatic-port testing.
+ * Validated ADI pneumatic-port map.
  */
 constexpr std::uint8_t kClawFlipperPort = 'a';
 constexpr std::uint8_t kClawClipperPort = 'b';
 
 constexpr double kMinimalModeScale = 0.5;
+constexpr std::int32_t kMaxMotorPower = 127;
+
+enum class DriveSystem {
+    Direct,
+    Steer
+};
+
+/**
+ * Select the drivetrain behavior before building and uploading.
+ * Direct is tank drive; Steer is arcade-style throttle and steering.
+ * Note: Change DriveSystem::Direct to DriveSystem:Steer in order to switch system.
+ */
+constexpr DriveSystem kSelectedDriveSystem = DriveSystem::Direct;
+
+struct DriveCommand {
+    std::int32_t left;
+    std::int32_t right;
+};
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDriveTrain(kLeftDrivePorts);
@@ -34,6 +53,44 @@ std::int32_t applyModeScale(const std::int32_t input, const bool minimalMode) {
 	return minimalMode
 		? static_cast<std::int32_t>(input * kMinimalModeScale)
 		: input;
+}
+
+std::int32_t limitMotorPower(const std::int32_t power) {
+    return std::clamp(power, -kMaxMotorPower, kMaxMotorPower);
+}
+
+DriveCommand readDirectDriveCommand() {
+    return {
+        master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y),
+        master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y)
+    };
+}
+
+DriveCommand readSteerDriveCommand() {
+    const std::int32_t throttle =
+        master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
+    const std::int32_t steering =
+        master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+
+    return {
+        limitMotorPower(throttle + steering),
+        limitMotorPower(throttle - steering)
+    };
+}
+
+DriveCommand readDriveCommand() {
+    if constexpr (kSelectedDriveSystem == DriveSystem::Direct) {
+        return readDirectDriveCommand();
+    }
+
+    return readSteerDriveCommand();
+}
+
+void runDrive(const bool minimalMode) {
+    const DriveCommand command = readDriveCommand();
+
+    leftDriveTrain.move(applyModeScale(command.left, minimalMode));
+    rightDriveTrain.move(applyModeScale(command.right, minimalMode));
 }
 
 }
@@ -105,10 +162,7 @@ void opcontrol() {
             minimalMode = true;
         }
 
-        leftDriveTrain.move(applyModeScale(
-            master.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y), minimalMode));
-        rightDriveTrain.move(applyModeScale(
-            master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y), minimalMode));
+        runDrive(minimalMode);
 
         if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
             lift.move(applyModeScale(110, minimalMode));
