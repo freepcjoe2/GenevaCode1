@@ -65,11 +65,26 @@ Commands are limited to the valid motor range of `-127` through `127` before min
 | File | Responsibility |
 | --- | --- |
 | `src/main.cpp` | Hardware map, controller mapping, drive-system selection, and PROS competition callbacks. |
+| `src/main_joe.cpp` | Joe-language version of the same competition code; active only when built with `JOE_PROGRAM`. |
+| `Joe.hpp` | Joe-language keyword definitions used by `src/main_joe.cpp`. |
 | `src/autonomous.cpp` | Autonomous routine body in `runAutonomous()`. |
 | `include/autonomous.hpp` | Declares `runAutonomous()` for `main.cpp`. |
 | `include/hivelib/` | Installed HiveLib localization library. It is not enabled yet. |
 
 `main.cpp` keeps PROS's required `autonomous()` callback and forwards it to `runAutonomous()` in `src/autonomous.cpp`.
+
+## Selecting the Joe-language program
+
+The normal build uses `src/main.cpp`. `src/main_joe.cpp` provides the same controller and drivetrain behavior using the keywords defined in `Joe.hpp`, but it is disabled by default. This prevents two files from defining PROS's required callbacks at once.
+
+To build the Joe-language version, build the project with `JOE_PROGRAM` defined for every source file. With the project's Makefile, use:
+
+```sh
+make clean
+make EXTRA_CXXFLAGS=-DJOE_PROGRAM
+```
+
+Use the normal build without `-DJOE_PROGRAM` to return to `src/main.cpp`. Clean between switching versions so no compiled files from the previous selection are reused.
 
 ## HiveLib preparation
 

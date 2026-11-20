@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <vector>
 
+#ifndef JOE_PROGRAM
+
 namespace {
 
 /**
@@ -183,3 +185,5 @@ void opcontrol() {
         pros::delay(20);
     }
 }
+
+#endif
