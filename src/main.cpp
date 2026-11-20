@@ -10,8 +10,8 @@ namespace {
  * Update these lists after motor-port testing. A negative port reverses that
  * motor so every motor in a group follows the same controller direction.
  */
-const std::vector<std::int8_t> kLeftDrivePorts = {-11, -12, -13};
-const std::vector<std::int8_t> kRightDrivePorts = {1, 2, 3};
+const std::vector<std::int8_t> kLeftDrivePorts = {-2, -11, -12};
+const std::vector<std::int8_t> kRightDrivePorts = {9, 20, 19};
 const std::vector<std::int8_t> kLiftPorts = {1, 5, -6, -10};
 
 /**
