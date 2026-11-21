@@ -5,8 +5,6 @@
 #include <cstdint>
 #include <vector>
 
-#ifndef JOE_PROGRAM
-
 namespace {
 
 /**
@@ -56,7 +54,6 @@ std::int32_t applyModeScale(const std::int32_t input, const bool minimalMode) {
 		? static_cast<std::int32_t>(input * kMinimalModeScale)
 		: input;
 }
-
 std::int32_t limitMotorPower(const std::int32_t power) {
     return std::clamp(power, -kMaxMotorPower, kMaxMotorPower);
 }
@@ -174,16 +171,14 @@ void opcontrol() {
             lift.move(0);
         }
 
-        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
             clawFlipper.toggle();
         }
 
-        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
             clawClipper.toggle();
         }
 
         pros::delay(20);
     }
 }
-
-#endif
