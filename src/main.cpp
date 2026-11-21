@@ -171,11 +171,11 @@ void opcontrol() {
             lift.move(0);
         }
 
-        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
             clawFlipper.toggle();
         }
 
-        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+        if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
             clawClipper.toggle();
         }
 
